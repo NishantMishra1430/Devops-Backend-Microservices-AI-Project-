@@ -1,0 +1,21 @@
+{
+  "name": "execution-service",
+  "version": "1.0.0",
+  "description": "Trade Execution Service for QuantTrade Engine",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.4",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.26.2",
+    "pg": "^8.11.5",
+    "zod": "^3.23.8"
+  },
+  "author": "",
+  "license": "MIT"
+}
