@@ -1,0 +1,135 @@
+services:
+  # DB and INFRA components
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+       POSTGRES_DB: quanttrade
+       POSTGRES_USER: postgres
+       POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"   
+      - "15672:15672" 
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# MICROSERVICES
+  api-gateway:
+    build:
+      context: ./api-gateway/
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    networks:
+      - quant_net
+    environment:
+      MARKET_DATA_URL: http://market-data-service:3001
+      QUANT_ENGINE_URL: http://quant-ai-engine:3002
+      EXECUTION_SERVICE_URL: http://execution-service:3003
+    depends_on:
+      - market-data-service
+      - quant-ai-engine
+      - execution-service
+    restart: unless-stopped
+
+
+  execution-service:
+    build:
+      context: ./execution-service/
+      dockerfile: Dockerfile
+    container_name: execution-service
+    ports:
+      - "3003:3003"
+    networks:
+      - quant_net
+    volumes:
+      - pg_data:/var/lib/postgresql/quanttrade
+    environment:
+      DB_URL: postgres://postgres:password@postgres:5432/quanttrade
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      QUANT_ENGINE_URL: http://quant-ai-engine:3002
+    depends_on:
+      - postgres
+      - quant-ai-engine
+      - rabbitmq
+    restart: unless-stopped
+
+
+  market-data-service:
+    build:
+      context: ./market-data-service/
+      dockerfile: Dockerfile
+    container_name: market-data-service
+    ports:
+      - "3001:3001"
+    networks:
+      - quant_net
+    volumes:
+      - redis_data:/market-data-service
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+
+  notification-service:
+    build:
+      context: ./notification-service/
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "3004:3004"
+    networks:
+      - quant_net
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
+
+  quant-ai-engine: 
+    build:
+      context: ./quant-ai-engine/
+      dockerfile: Dockerfile
+    container_name: quant-engine
+    ports:
+      - "3002:3002"
+    networks:
+      - quant_net
+    volumes:
+      - redis_data:/quant-ai-engine
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  pg_data:
+networks:
+  quant_net:
