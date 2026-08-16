@@ -18,15 +18,16 @@ python_dockerfile = """
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt ./
-RUN apt-get update &&\
-apt-get upgrade &&\
+RUN apt-get update -y &&\
+apt-get upgrade -y &&\
 pip install --no-cache-dir -r requirements.txt
 COPY . . 
 USER nobody
 EXPOSE 3002
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002"]"""
 dockerignore = """
-*.txt
+.env
+.env.example
 logs/
 .git
 *.md
@@ -43,6 +44,7 @@ def dockerfile():
             dockerig.write_text(dockerignore)
         else:
             print(f"{dockerig} file is already exists")
+            dockerig.write_text(dockerignore)
         if not docker.exists():
             docker.touch()
             if not folder == "quant-ai-engine":

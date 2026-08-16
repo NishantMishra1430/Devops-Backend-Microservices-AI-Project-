@@ -1,5 +1,6 @@
 
-*.txt
+.env
+.env.example
 logs/
 .git
 *.md
