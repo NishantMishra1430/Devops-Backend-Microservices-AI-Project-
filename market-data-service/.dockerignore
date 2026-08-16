@@ -1,0 +1,6 @@
+
+*.txt
+logs/
+.git
+*.md
+cache
