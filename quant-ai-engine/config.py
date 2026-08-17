@@ -17,6 +17,5 @@ try:
     settings = Settings()
 except Exception as e:
     logging.basicConfig(level=logging.FATAL)
-    logging.fatal(f"Quant AI Engine Config Error: Missing or invalid environment variables.
-{e}")
+    logging.fatal(f"Quant AI Engine Config Error: Missing or invalid environment variables.{e}")
     sys.exit(1)
