@@ -1,68 +1,72 @@
-import fastify from 'fastify';
-import { env } from './config/env.js';
-import { closeRedis } from './services/redis.js';
-import priceRoutes from './routes/prices.js';
+import Fastify from 'fastify';
+import WebSocket from 'ws';
+import Redis from 'ioredis';
 
-const app = fastify({
-  logger: {
-    level: 'info',
-    timestamp: () => `,"time":"${new Date().toISOString()}"`
-  }
+const fastify = Fastify({ logger: true });
+
+// 1. Redis ke strict status trackers laga
+const redis = new Redis(process.env.REDIS_URL || 'redis://redis:6379');
+
+redis.on('connect', () => fastify.log.info('🟢 STAGE 1: Redis TCP Connection OK!'));
+redis.on('error', (err) => fastify.log.error('🔴 STAGE 1 ERROR: Redis se connect nahi ho pa raha:', err));
+
+// Basic health check for Docker
+fastify.get('/health', async (request, reply) => {
+    return { status: 'OK', message: 'Market Data Producer is running' };
 });
 
-// Centralized Error Handling
-app.setErrorHandler((error, request, reply) => {
-  app.log.error({ err: error, requestPath: request.url }, 'Global Error Handler');
-  reply.status(error.statusCode || 500).send({
-    success: false,
-    statusCode: error.statusCode || 500,
-    error: error.name || 'Internal Server Error',
-    message: 'An unexpected error occurred in the Market Data Service'
-  });
-});
+const startBinanceStream = () => {
+    fastify.log.info("Attempting to connect to Binance WebSocket...");
+    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
 
-// Infrastructure Health Check
-app.get('/health', async (request, reply) => {
-  return { 
-    status: 'operational', 
-    service: 'market-data-service', 
-    timestamp: new Date().toISOString() 
-  };
-});
+    ws.on('open', () => {
+        fastify.log.info('✅ Successfully connected to Binance Live Stream!');
+    });
 
-// Register Market Routes
-app.register(priceRoutes);
+    // 2. Data stream ke andar aggressive logging
+    ws.on('message', async (data) => {
+        try {
+            const trade = JSON.parse(data);
+            const currentPrice = trade.p; 
+            
+            // Agar price ajeeb format mein aaya, toh ye pakad lega
+            if (!currentPrice) {
+                fastify.log.warn(`⚠️ STAGE 2 WARNING: Price nahi mila! Binance ne ye bheja: ${data}`);
+                return;
+            }
 
-// Bootstrap & Graceful Shutdown
-const startServer = async () => {
-  try {
-    await app.listen({ port: parseInt(env.PORT, 10), host: env.HOST });
-    app.log.info(`🚀 Market Data Service active at http://${env.HOST}:${env.PORT}`);
+            // Dekh ki write function tak data pahuncha ya nahi
+            fastify.log.info(`[DEBUG] STAGE 3: Redis mein $${currentPrice} likhne ki koshish kar raha hu...`);
+            
+            await redis.xadd('market:stream:live', '*', 'price', currentPrice);
+            
+            fastify.log.info(`[DEBUG] STAGE 4: SUCCESS! Redis mein likh diya!`);
+            
+        } catch (error) {
+            // Agar xadd fail hua toh exact error yahan print hoga
+            fastify.log.error('🔴 STAGE 4 ERROR: Redis xadd command fail ho gaya:', error.message);
+        }
+    });
 
-    // SIGINT (Ctrl+C) & SIGTERM (Docker/K8s kill signal) Handling
-    const shutdown = async (signal) => {
-      app.log.info(`
-Received ${signal}, initiating graceful shutdown...`);
-      
-      // 1. Stop accepting new HTTP requests
-      await app.close();
-      app.log.info('HTTP server closed.');
-      
-      // 2. Drain and close Redis connections
-      await closeRedis();
-      app.log.info('Redis connection successfully closed.');
-      
-      app.log.info('Market Data Service shutdown complete. Exiting process.');
-      process.exit(0);
-    };
+    ws.on('close', () => {
+        fastify.log.warn('⚠️ Binance WebSocket disconnected. Reconnecting in 5 seconds...');
+        setTimeout(startBinanceStream, 5000);
+    });
 
-    process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-  } catch (err) {
-    app.log.error({ err }, 'Market Data Service failed to initialize');
-    process.exit(1);
-  }
+    ws.on('error', (err) => {
+        fastify.log.error('WebSocket Error:', err.message);
+    });
 };
 
-startServer();
+const start = async () => {
+    try {
+        await fastify.listen({ port: 3001, host: '0.0.0.0' });
+        fastify.log.info('🚀 Market Data Service active at http://0.0.0.0:3001');
+        startBinanceStream();
+    } catch (err) {
+        fastify.log.error(err);
+        process.exit(1);
+    }
+};
+
+start();
