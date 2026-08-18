@@ -1,0 +1,13 @@
+{
+  "name": "market-data-producer",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.2",
+    "ws": "^8.16.0"
+  }
+}

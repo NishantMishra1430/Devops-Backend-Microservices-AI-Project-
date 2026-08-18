@@ -18,6 +18,8 @@ services:
       retries: 5
   redis:
     image: redis:7-alpine
+    container_name: quant-redis
+    command: redis-server --save "" --appendonly no
     ports:
       - "6379:6379"
     networks:
@@ -27,6 +29,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 2s
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     ports:
@@ -35,8 +39,8 @@ services:
     networks:
       - quant_net
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 5s
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -113,7 +117,8 @@ services:
     environment:
       RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
 
@@ -131,8 +136,42 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
+  
+  producer:
+    build:
+      context: ./producer/
+      dockerfile: Dockerfile
+    container_name: quant-producer
+    environment:
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    networks:
+      - quant_net
+    depends_on:
+      redis:
+        condition: service_healthy
+  consumer:
+    build:
+      context: ./consumer/
+      dockerfile: Dockerfile
+    container_name: quant_consumer
+    ports:
+      - "3005:8000"
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - quant_net
 
 volumes:
   redis_data:

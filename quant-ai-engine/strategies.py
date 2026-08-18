@@ -31,55 +31,71 @@ async def generate_signals() -> list[dict]:
         raise Exception("Redis client is not initialized.")
 
     try:
-        raw_data = await client.get("market:prices:latest")
+        streams = await client.xread({"market:stream:live": "0-0"}, count=1, block=1000)
+
+        raw_data = None
+        if streams:
+            stream_name, messages = streams[0]
+            if messages:
+                message_id, fields = messages[-1]
+                # fields se price extract kar rahe hain
+                if isinstance(fields, dict):
+                    raw_data = fields.get(b'price') or fields.get('price')
+                elif isinstance(fields, list):
+                    try:
+                        price_idx = fields.index(b'price') if b'price' in fields else fields.index('price')
+                        raw_data = fields[price_idx + 1]
+                    except Exception:
+                        raw_data = messages[-1][1][1]
         if not raw_data:
             logger.warning("No market data found in Redis cache.")
             return []
 
-        current_prices = json.loads(raw_data)
+        # Raw data ko float mein convert karo (kyunki Redis stream se data string mein aata hai)
+        # Agar bytes mein hai toh decode kar lo
+        if isinstance(raw_data, bytes):
+            raw_data = raw_data.decode('utf-8')
+            
+        current_price = float(raw_data)
+        ticker = "BTCUSDT"
     except Exception as e:
         logger.error(f"Error reading market data from Redis: {e}")
         raise
 
     signals = []
 
-    for ticker, current_price in current_prices.items():
-        # Update rolling window
-        history = price_history[ticker]
-        history.append(current_price)
-        if len(history) > WINDOW_SIZE:
-            history.pop(0)
+    # Update rolling window for BTCUSDT
+    history = price_history[ticker]
+    history.append(current_price)
+    if len(history) > WINDOW_SIZE:
+        history.pop(0)
 
-        # 1. Calculate Core Statistics
-        sma = calculate_sma(history)
-        variance = calculate_variance(history, sma)
-        std_dev = math.sqrt(variance)
+    # 1. Calculate Core Statistics
+    sma = calculate_sma(history)
+    variance = calculate_variance(history, sma)
+    std_dev = math.sqrt(variance)
 
-        signal = "HOLD"
-        confidence = 0.50
+    signal = "HOLD"
+    confidence = 0.50
 
-        # 2. Mean Reversion Logic
-        if std_dev > 0:
-            # Calculate Z-Score (Standard scores away from the mean)
-            z_score = (current_price - sma) / std_dev
-            
-            # If price drops more than 1 standard deviation below SMA, it is oversold -> BUY
-            if z_score <= -1.0:
-                signal = "BUY"
-                confidence = min(0.50 + abs(z_score) * 0.15, 0.99)
-            
-            # If price spikes more than 1 standard deviation above SMA, it is overbought -> SELL
-            elif z_score >= 1.0:
-                signal = "SELL"
-                confidence = min(0.50 + abs(z_score) * 0.15, 0.99)
+    # 2. Mean Reversion Logic
+    if std_dev > 0:
+        z_score = (current_price - sma) / std_dev
         
-        signals.append({
-            "ticker": ticker,
-            "signal": signal,
-            "confidence": round(confidence, 4),
-            "current_price": current_price,
-            "sma": round(sma, 2),
-            "variance": round(variance, 2)
-        })
+        if z_score <= -1.0:
+            signal = "BUY"
+            confidence = min(0.50 + abs(z_score) * 0.15, 0.99)
+        elif z_score >= 1.0:
+            signal = "SELL"
+            confidence = min(0.50 + abs(z_score) * 0.15, 0.99)
+    
+    signals.append({
+        "ticker": ticker,
+        "signal": signal,
+        "confidence": round(confidence, 4),
+        "current_price": current_price,
+        "sma": round(sma, 2),
+        "variance": round(variance, 2)
+    })
 
     return signals
