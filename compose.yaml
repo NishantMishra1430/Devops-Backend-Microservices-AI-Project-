@@ -173,6 +173,25 @@ services:
     networks:
       - quant_net
 
+  execution-engine:
+    build:
+      context: ./consumer/
+      dockerfile: ex.en.Dockerfile
+    container_name: execution-engine
+    networks:
+      - quant_net
+    environment:
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      redis:
+        condition: service_healthy
+      consumer:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+
 volumes:
   redis_data:
   pg_data:
