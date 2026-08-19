@@ -1,8 +1,10 @@
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 import uvicorn
+import traceback
 
 from config import settings
 from redis_client import redis_manager
@@ -15,18 +17,62 @@ logging.basicConfig(
 )
 logger = logging.getLogger("quant-engine.main")
 
+# Background Event-Driven Worker Loop
+async def background_signal_processor():
+    logger.info("Background Quant Worker started. Processing strategy signals...")
+    
+    while True:
+        try:
+            # Generate signals from the existing strategy
+            signals = await generate_signals()
+            
+            if signals:
+                redis_client = getattr(redis_manager, "client", None) or getattr(redis_manager, "redis", None) or redis_manager
+                if not hasattr(redis_client, "xadd") and hasattr(redis_manager, "redis_client"):
+                    redis_client = redis_manager.redis_client
+
+                for sig in signals:
+                    # Strictly cast EVERY value to string so Redis never sees a 'NoneType'
+                    payload = {
+                        "action": str(sig.get("action", "UNKNOWN")),
+                        "symbol": str(sig.get("symbol", "BTCUSDT")),
+                        "price": str(sig.get("price", 0.0)),
+                        "z_score": str(sig.get("z_score", 0.0))
+                    }
+                    
+                    await redis_client.xadd("market:stream:signals", payload)
+                    logger.info(f"Signal pushed to market:stream:signals -> {payload}")
+            
+            await asyncio.sleep(2)
+
+        except asyncio.CancelledError:
+            logger.info("Background signal processor cancelled.")
+            break
+        except Exception as e:
+            logger.error(f"Error in background signal processor: {e}")
+            # This will print the exact line number if anything fails again
+            logger.error(traceback.format_exc())
+            await asyncio.sleep(2)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Quant AI Engine...")
+    worker_task = None
     try:
         await redis_manager.connect()
+        # Start background event-driven loop on startup
+        worker_task = asyncio.create_task(background_signal_processor())
     except Exception as e:
         logger.error(f"Critical startup failure: {e}")
-        # Allow Fastapi to boot so orchestration tools can poll health checks and see the failure
     
     yield  # Application is running
     
     logger.info("Received termination signal. Shutting down gracefully...")
+    if worker_task:
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
     await redis_manager.disconnect()
 
 # Initialize FastAPI
@@ -72,7 +118,6 @@ async def get_trading_signals():
         )
 
 if __name__ == "__main__":
-    # Bypassed if executed via Docker/Gunicorn in production, but useful for local execution
     uvicorn.run(
         "main:app",
         host=settings.HOST,
