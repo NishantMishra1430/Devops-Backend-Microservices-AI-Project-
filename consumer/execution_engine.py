@@ -52,7 +52,7 @@ class RiskManager:
         self.tp_pct = tp_pct
 
     def calculate_position_size(self, current_price: float, portfolio: PortfolioState) -> float:
-        total_capital = portfolio.total_value({}) 
+        total_capital = portfolio.total_value({})
         max_fiat_allocation = total_capital * self.max_allocation_pct
         actual_fiat_allocation = min(max_fiat_allocation, portfolio.cash)
         return actual_fiat_allocation / current_price if current_price > 0 else 0
@@ -75,7 +75,7 @@ class ExecutionEngine:
         """Sends trade events to RabbitMQ for Notification Service"""
         if not self.rmq_channel:
             return
-            
+
         message = aio_pika.Message(
             body=json.dumps(payload).encode(),
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT
@@ -87,15 +87,14 @@ class ExecutionEngine:
         logger.info(f"Event published to RabbitMQ -> {payload}")
 
     async def process_signal(self, payload: dict):
-        # Redis xadd sets keys directly, not inside a 'payload' JSON string
         symbol = payload.get("symbol", "BTCUSDT")
-        signal = payload.get("action")  # Mapped from our Quant Engine fix
-        
+        signal = payload.get("action")  
+
         try:
             current_price = float(payload.get("price", 0.0))
         except ValueError:
             current_price = 0.0
-            
+
         if current_price <= 0:
             return
 
@@ -121,7 +120,6 @@ class ExecutionEngine:
         )
         logger.info(f"OPEN {side} | {symbol} | Qty: {qty:.4f} | Entry: ${price:.2f}")
 
-        # Send Event to Notification Service
         await self.publish_event({
             "ticker": symbol,
             "action": f"OPEN_{side}",
@@ -147,26 +145,25 @@ class ExecutionEngine:
 
     async def execute_exit(self, symbol: str, exit_price: float, reason: str):
         pos = self.portfolio.positions.pop(symbol)
-        
+
         pnl = (exit_price - pos.entry_price) * pos.quantity if pos.side == 'LONG' else (pos.entry_price - exit_price) * pos.quantity
         capital_returned = (pos.entry_price * pos.quantity) + pnl
         self.portfolio.cash += capital_returned
 
         self.portfolio.history.append(TradeRecord(
-            symbol=symbol, side=pos.side, entry_price=pos.entry_price, 
+            symbol=symbol, side=pos.side, entry_price=pos.entry_price,
             exit_price=exit_price, quantity=pos.quantity, realized_pnl=pnl
         ))
-        
+
         logger.info(f"CLOSE {pos.side} ({reason}) | {symbol} | Exit: ${exit_price:.2f} | PnL: ${pnl:.2f}")
 
-        # Send Event to Notification Service
         await self.publish_event({
             "ticker": symbol,
             "action": f"CLOSE_{pos.side}_{reason}",
             "amount_usd": round(capital_returned, 2)
         })
 
-# --- Main Ingestion Loop ---
+# --- Main Ingestion Loop with Retry Logic ---
 async def consume_signals():
     redis_url = os.getenv("REDIS_URL")
     rabbitmq_url = os.getenv("RABBITMQ_URL")
@@ -175,11 +172,23 @@ async def consume_signals():
         logger.fatal("REDIS_URL and RABBITMQ_URL are strictly required.")
         exit(1)
 
-    # 1. Connect to Redis
     redis_client = redis.from_url(redis_url, decode_responses=True)
-    
-    # 2. Connect to RabbitMQ & Setup Queue
-    rmq_connection = await aio_pika.connect_robust(rabbitmq_url)
+
+    # RabbitMQ Connection with Fault-Tolerant Retry Loop
+    retries = 5
+    rmq_connection = None
+    while retries > 0:
+        try:
+            rmq_connection = await aio_pika.connect_robust(rabbitmq_url)
+            break
+        except Exception as e:
+            retries -= 1
+            logger.warning(f"RabbitMQ not ready, retrying... ({retries} attempts left)")
+            if retries == 0:
+                logger.error(f"Failed to connect to RabbitMQ: {e}")
+                raise e
+            await asyncio.sleep(3)
+
     rmq_channel = await rmq_connection.channel()
     await rmq_channel.declare_queue("trade_events", durable=True)
 
@@ -198,7 +207,6 @@ async def consume_signals():
             for stream_name, messages in events:
                 for message_id, data in messages:
                     last_id = message_id
-                    # Pass the flat dictionary directly to the engine
                     await engine.process_signal(data)
 
     except asyncio.CancelledError:
