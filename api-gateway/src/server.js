@@ -1,57 +1,84 @@
-import fastify from 'fastify';
-import { env } from './config/env.js';
-import proxyPlugin from './plugins/proxy.js';
+import Fastify from 'fastify';
+import proxy from '@fastify/http-proxy';
 
-// Initialize Fastify with highly optimized built-in Pino logger
-const app = fastify({
-  logger: {
-    level: 'info',
-    timestamp: () => `,"time":"${new Date().toISOString()}"`
-  }
+const fastify = Fastify({ logger: true });
+
+// Define public endpoints that bypass the JWT check
+const PUBLIC_ROUTES = [
+    '/api/auth/login', 
+    '/api/auth/register', 
+    '/health'
+];
+
+// --- Authentication Middleware (Border Checkpoint) ---
+fastify.addHook('preHandler', async (request, reply) => {
+    // 1. Allow public routes to bypass authentication
+    if (PUBLIC_ROUTES.includes(request.url) || request.url.startsWith('/api/auth/')) {
+        return;
+    }
+
+    // 2. Extract Authorization header
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return reply.code(401).send({ error: 'Missing or malformed Authorization header. Bearer token required.' });
+    }
+
+    try {
+        // 3. Query the internal Auth Service to validate the token
+        // Using 'auth-service:8000' relies on Docker Compose internal DNS
+        const response = await fetch('http://auth-service:8000/verify', {
+            method: 'GET',
+            headers: {
+                'Authorization': authHeader
+            }
+        });
+
+        if (!response.ok) {
+            return reply.code(401).send({ error: 'Invalid or expired token.' });
+        }
+
+        const authData = await response.json();
+        
+        // 4. Inject the validated user ID into the downstream headers
+        // This allows your Quant and Execution services to know exactly who made the request
+        // without them having to verify the token themselves.
+        request.headers['X-User-Id'] = authData.user_id;
+
+    } catch (error) {
+        request.log.error(`[Auth-Service] Connection failed: ${error.message}`);
+        return reply.code(503).send({ error: 'Authentication service temporarily unavailable.' });
+    }
 });
 
-// Centralized Error Handling
-app.setErrorHandler((error, request, reply) => {
-  app.log.error({ err: error, requestPath: request.url }, 'Global Error Handler Triggered');
-  reply.status(error.statusCode || 500).send({
-    statusCode: error.statusCode || 500,
-    error: error.name || 'Internal Server Error',
-    message: error.message || 'An unexpected error occurred in the API Gateway'
-  });
+// --- Microservice Route Proxies ---
+
+// 1. Auth Service Routes (Public)
+fastify.register(proxy, {
+    upstream: 'http://auth-service:8000',
+    prefix: '/api/auth',
+    rewritePrefix: '', // Maps /api/auth/register on the Gateway to /register on the Auth Service
 });
 
-// Infrastructure Health Check
-app.get('/health', async (request, reply) => {
-  return { 
-    status: 'operational', 
-    service: 'api-gateway', 
-    timestamp: new Date().toISOString() 
-  };
+// 2. Execution Engine Routes (Protected)
+fastify.register(proxy, {
+    upstream: 'http://quant-execution:8000',
+    prefix: '/api/execution',
+    rewritePrefix: '', 
 });
 
-// Mount the microservice proxy routes
-app.register(proxyPlugin);
+// 3. API Gateway Health Check (Public)
+fastify.get('/health', async (request, reply) => {
+    return { status: 'healthy', service: 'api-gateway' };
+});
 
-// Bootstrap & Graceful Shutdown
-const startServer = async () => {
-  try {
-    await app.listen({ port: parseInt(env.PORT, 10), host: env.HOST });
-    app.log.info(`🚀 QuantTrade API Gateway active at http://${env.HOST}:${env.PORT}`);
-
-    const shutdown = async (signal) => {
-      app.log.info(`\nReceived ${signal}, initiating graceful shutdown...`);
-      await app.close();
-      app.log.info('API Gateway closed successfully. Exiting process.');
-      process.exit(0);
-    };
-
-    process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-  } catch (err) {
-    app.log.error({ err }, 'API Gateway failed to initialize');
-    process.exit(1);
-  }
+const start = async () => {
+    try {
+        await fastify.listen({ port: 3000, host: '0.0.0.0' });
+        fastify.log.info(`API Gateway listening on port 3000`);
+    } catch (err) {
+        fastify.log.error(err);
+        process.exit(1);
+    }
 };
 
-startServer();
+start();
