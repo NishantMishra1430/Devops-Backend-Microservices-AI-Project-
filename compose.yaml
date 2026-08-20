@@ -7,6 +7,9 @@ services:
       - "5432:5432"
     networks:
       - quant_net
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     environment:
        POSTGRES_DB: quanttrade
        POSTGRES_USER: postgres
@@ -74,8 +77,6 @@ services:
       - "3003:3003"
     networks:
       - quant_net
-    volumes:
-      - pg_data:/var/lib/postgresql/quanttrade
     environment:
       DB_URL: postgres://postgres:password@postgres:5432/quanttrade
       RABBITMQ_URL: amqp://rabbitmq:5672
@@ -191,6 +192,28 @@ services:
       rabbitmq:
         condition: service_healthy
 
+
+  auth-service:
+    build:
+      context: ./auth-service/
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "3006:3006"
+    networks:
+      - quant_net
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:password@postgres:5432/quanttrade
+      JWT_SECRET_KEY: yash27
+      JWT_EXPIRE_MINUTES: 15
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"] 
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   redis_data:
