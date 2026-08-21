@@ -217,6 +217,22 @@ services:
       timeout: 5s
       retries: 3
 
+  frontend-service:
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "80:80"
+    networks:
+      - quant_net
+    environment:
+      VITE_APP_ENV: development
+      VITE_WS_URL: /ws/
+      VITE_API_BASE_URL: ""
+    depends_on:
+      - api-gateway
+
 volumes:
   redis_data:
   pg_data:
