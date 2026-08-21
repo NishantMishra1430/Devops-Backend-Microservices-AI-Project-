@@ -1,0 +1,45 @@
+# Dependency directories
+node_modules/
+npm-debug.log
+npm-debug.log.*
+yarn-error.log
+yarn-debug.log*
+
+# Production build outputs (Prevent copying local builds into the container)
+dist/
+build/
+out/
+
+# Environment variables (Prevent local secrets from leaking into the Docker build context)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Git and version control
+.git/
+.gitignore
+
+# Docker-related files (Not needed inside the container itself)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
