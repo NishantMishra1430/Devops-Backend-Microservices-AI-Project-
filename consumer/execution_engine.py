@@ -176,18 +176,17 @@ async def consume_signals():
 
     # RabbitMQ Connection with Fault-Tolerant Retry Loop
     retries = 5
+    # RabbitMQ Connection with Infinite Robust Retry Loop
     rmq_connection = None
-    while retries > 0:
+    while rmq_connection is None:
         try:
+            logger.info("Attempting to connect to RabbitMQ...")
             rmq_connection = await aio_pika.connect_robust(rabbitmq_url)
+            logger.info("Successfully connected to RabbitMQ!")
             break
         except Exception as e:
-            retries -= 1
-            logger.warning(f"RabbitMQ not ready, retrying... ({retries} attempts left)")
-            if retries == 0:
-                logger.error(f"Failed to connect to RabbitMQ: {e}")
-                raise e
-            await asyncio.sleep(3)
+            logger.warning(f"RabbitMQ not ready yet ({e}), retrying in 5 seconds...")
+            await asyncio.sleep(5)
 
     rmq_channel = await rmq_connection.channel()
     await rmq_channel.declare_queue("trade_events", durable=True)
