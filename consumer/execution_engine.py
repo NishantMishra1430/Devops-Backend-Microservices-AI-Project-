@@ -199,19 +199,24 @@ async def consume_signals():
 
     try:
         while True:
-            events = await redis_client.xread({stream_key: last_id}, count=5, block=5000)
-            if not events:
-                continue
+            try:
+                events = await redis_client.xread({stream_key: last_id}, count=5, block=5000)
+                if not events:
+                    continue
 
-            for stream_name, messages in events:
-                for message_id, data in messages:
-                    last_id = message_id
-                    await engine.process_signal(data)
+                for stream_name, messages in events:
+                    for message_id, data in messages:
+                        last_id = message_id
+                        await engine.process_signal(data)
+            except Exception as inner_e:
+                logger.warning(f"Redis stream read warning/hiccup: {inner_e}, retrying in 2 seconds...")
+                await asyncio.sleep(2)
 
     except asyncio.CancelledError:
         logger.info("Process cancelled.")
     except Exception as e:
         logger.error(f"[Fatal] Execution process failure: {e}")
+
     finally:
         await redis_client.aclose()
         await rmq_connection.close()
