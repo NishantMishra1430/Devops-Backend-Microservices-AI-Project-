@@ -176,18 +176,17 @@ async def consume_signals():
 
     # RabbitMQ Connection with Fault-Tolerant Retry Loop
     retries = 5
+    # RabbitMQ Connection with Infinite Robust Retry Loop
     rmq_connection = None
-    while retries > 0:
+    while rmq_connection is None:
         try:
+            logger.info("Attempting to connect to RabbitMQ...")
             rmq_connection = await aio_pika.connect_robust(rabbitmq_url)
+            logger.info("Successfully connected to RabbitMQ!")
             break
         except Exception as e:
-            retries -= 1
-            logger.warning(f"RabbitMQ not ready, retrying... ({retries} attempts left)")
-            if retries == 0:
-                logger.error(f"Failed to connect to RabbitMQ: {e}")
-                raise e
-            await asyncio.sleep(3)
+            logger.warning(f"RabbitMQ not ready yet ({e}), retrying in 5 seconds...")
+            await asyncio.sleep(5)
 
     rmq_channel = await rmq_connection.channel()
     await rmq_channel.declare_queue("trade_events", durable=True)
@@ -200,19 +199,24 @@ async def consume_signals():
 
     try:
         while True:
-            events = await redis_client.xread({stream_key: last_id}, count=5, block=5000)
-            if not events:
-                continue
+            try:
+                events = await redis_client.xread({stream_key: last_id}, count=5, block=5000)
+                if not events:
+                    continue
 
-            for stream_name, messages in events:
-                for message_id, data in messages:
-                    last_id = message_id
-                    await engine.process_signal(data)
+                for stream_name, messages in events:
+                    for message_id, data in messages:
+                        last_id = message_id
+                        await engine.process_signal(data)
+            except Exception as inner_e:
+                logger.warning(f"Redis stream read warning/hiccup: {inner_e}, retrying in 2 seconds...")
+                await asyncio.sleep(2)
 
     except asyncio.CancelledError:
         logger.info("Process cancelled.")
     except Exception as e:
         logger.error(f"[Fatal] Execution process failure: {e}")
+
     finally:
         await redis_client.aclose()
         await rmq_connection.close()

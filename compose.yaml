@@ -58,10 +58,12 @@ services:
     networks:
       - quant_net
     environment:
+      AUTH_SERVICE_URL: http://auth-service:3006
       MARKET_DATA_URL: http://market-data-service:3001
       QUANT_ENGINE_URL: http://quant-ai-engine:3002
       EXECUTION_SERVICE_URL: http://execution-service:3003
     depends_on:
+      - auth-service
       - market-data-service
       - quant-ai-engine
       - execution-service
@@ -214,6 +216,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  frontend-service:
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "8080:80"
+    networks:
+      - quant_net
+    environment:
+      VITE_APP_ENV: development
+      VITE_WS_URL: /ws/
+      VITE_API_BASE_URL: ""
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
 
 volumes:
   redis_data:
