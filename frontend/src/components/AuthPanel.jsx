@@ -14,21 +14,40 @@ export default function AuthPanel() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const response = await api.post(endpoint, { email, password });
       
+      // THE BULLETPROOF PAYLOAD: 
+      // Hum JSON bhej rahe hain aur 'email' + 'username' dono bhej rahe hain.
+      // Isse backend Pydantic model satisfy ho jayega chahe usko kuch bhi chahiye ho!
+      const response = await api.post(endpoint, { 
+        email: email, 
+        username: email, 
+        password: password 
+      });
+
       if (isLogin) {
         login(response.data.access_token);
       } else {
-        setIsLogin(true);
-        setError('Registration successful. Please log in.');
+        setIsLogin(true); // Wapas login page par bhej do
+        setError('Registration successful. Please log in.'); // Halka sa notification
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Authentication failed');
+      // TERA CRASH-PROOF ERROR HANDLER (Yeh mast chal raha hai!)
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(`Validation Error: ${detail[0].loc.join('.')} - ${detail[0].msg}`);
+      } else if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError('Authentication failed. Please check your credentials.');
+      }
     }
+    
     setLoading(false);
   };
+       
 
   return (
     <div className="flex items-center justify-center h-screen bg-trading-bg font-sans">
