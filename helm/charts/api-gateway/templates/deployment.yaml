@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "api-gateway.serviceAccountName" . }}
+      serviceAccountName: {{ include "api-gateway.serviceAccountName" .}}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -44,6 +44,16 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          env:
+            - name: MARKET_DATA_URL 
+              {{- toYaml .Values.env.market_data | nindent 14 }}
+            - name: AUTH_SERVICE_URL
+              {{- toYaml .Values.env.auth_service | nindent 14 }}
+            - name: QUANT_ENGINE_URL
+              {{- toYaml .Values.env.quant_engine | nindent 14 }}
+            - name: EXECUTION_SERVICE_URL
+              {{- toYaml .Values.env.execution_service | nindent 14 }}
+
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
