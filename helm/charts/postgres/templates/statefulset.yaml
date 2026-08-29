@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "postgres.fullname" . }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "postgres.fullname" . }}-headless
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "postgres.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "postgres.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: tcp-postgres
+          env:
+            - name: POSTGRES_USER
+              {{- toYaml .Values.env.postgres_user | nindent 14 }}
+            - name: POSTGRES_PASSWORD
+              {{- toYaml .Values.env.postgres_password | nindent 14 }}
+            - name: POSTGRES_DB
+              value: "quanttrade"
+          volumeMounts:
+            - name: data-volume
+              mountPath: /var/lib/postgresql/data
+  
+  volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes: 
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.vct.storage }}
