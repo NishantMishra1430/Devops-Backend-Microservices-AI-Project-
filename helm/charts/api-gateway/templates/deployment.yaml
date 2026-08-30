@@ -45,6 +45,8 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: REDIS_URL
+              {{- toYaml .Values.env.redis_url | nindent 14 }}
             - name: MARKET_DATA_URL 
               {{- toYaml .Values.env.market_data | nindent 14 }}
             - name: AUTH_SERVICE_URL

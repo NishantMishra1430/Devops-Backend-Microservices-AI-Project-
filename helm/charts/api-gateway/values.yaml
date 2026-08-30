@@ -13,6 +13,11 @@ image:
   tag: "v1"
   
 env:
+  redis_url:
+    valueFrom:
+      secretKeyRef:
+        name: data-url
+        key: redis-url
   auth_service:
     valueFrom:
       configMapKeyRef:
