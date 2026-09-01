@@ -40,11 +40,29 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          env:
+            - name: VITE_APP_ENV
+              value: {{ .Values.env.vite_app | quote }}
+            - name: VITE_WS_URL
+              {{- toYaml .Values.env.vite_ws | nindent 14 }}
+            - name: VITE_API_BASE_URL
+              {{- toYaml .Values.env.vite_api | nindent 14 }}
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: frontend-nginx-config
+
           {{- with .Values.livenessProbe }}
+
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
