@@ -8,8 +8,9 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: {{ .Values.service.port }}
+      nodePort: {{ .Values.service.nodeport}}
       protocol: TCP
-      name: http
+      name: quant-frontend-port
   selector:
     {{- include "frontend-service.selectorLabels" . | nindent 4 }}
