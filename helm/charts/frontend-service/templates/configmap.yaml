@@ -15,7 +15,7 @@ data:
         }
 
         location /auth/ {
-            proxy_pass http://api-gateway:3000/;
+            proxy_pass http://auth:3006/;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
@@ -44,12 +44,12 @@ data:
         }
 
         location /ws/ {
-            proxy_pass http://market-data-service:3001/;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "Upgrade";
-            proxy_set_header Host $host;
-            proxy_read_timeout 86400;
+        proxy_pass http://api-gateway:3000/;  # Re-routed to the actual WS streamer
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400;
         }
 
         gzip on;
