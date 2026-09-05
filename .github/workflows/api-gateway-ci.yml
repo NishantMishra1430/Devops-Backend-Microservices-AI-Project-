@@ -1,0 +1,88 @@
+name: Quant Api Gateway CI Pipeline
+
+on:
+  push:
+    branches:
+      - test 
+      - main
+    paths:
+      - "api-gateway/**"
+      - ".github/workflows/api-gateway-ci.yml"
+
+
+jobs:
+  Code-Lint-And-Review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Credentials Hardcoding Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }} 
+  Building-Artifacts:
+    runs-on: ubuntu-latest
+    needs: Code-Lint-And-Review
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      - name: Building Artifacts
+        working-directory: "./api-gateway"
+        run: | 
+          npm install 
+          npm run build --if-present
+
+  Image-Build-And-Scan-And-Register:
+    runs-on: ubuntu-latest
+    needs: Building-Artifacts
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Image Build
+        uses: docker/build-push-action@v5
+        with:
+          context: "./api-gateway"
+          load: true
+          tags: quant-api-gateway:${{github.sha}}
+      - name: Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'quant-api-gateway:${{github.sha}}'
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+      - name: Push To DockerHub
+        run: |
+          docker tag quant-api-gateway:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-api-gateway:${{github.sha}}
+          docker push ${{ secrets.DOCKER_USERNAME }}/quant-api-gateway:${{github.sha}} 
+  Helm:
+    runs-on: ubuntu-latest
+    needs: Image-Build-And-Scan-And-Register
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GAT }} 
+      - name: Update Helm Values
+        run: |
+          
+          yq -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/quant-api-gateway"' helm/charts/api-gateway/values.yaml
+          yq -i '.image.tag = "${{github.sha}}"' helm/charts/api-gateway/values.yaml
+          cat helm/charts/api-gateway/values.yaml
+      - name: Commit and Push Changes to Trigger ArgoCD
+        run: |
+          git config user.name "${{ secrets.GUN }}"
+          git config user.email "${{ secrets.GMAIL }}"
+          git add helm/charts/api-gateway/values.yaml
+          git commit -m "chore(gitops): update api-gateway image to ${{github.sha}}"
+          git push -u origin ${{ github.ref_name }}
