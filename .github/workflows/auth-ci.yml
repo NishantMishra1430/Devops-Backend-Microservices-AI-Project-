@@ -69,7 +69,7 @@ jobs:
 
   
   Helm:
-    run: ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [Code-Lint-And-Review,Building-Code-Artifacts,Image-Build-And-Scan-And-Register]
     steps:
       - name: Code Checkout
