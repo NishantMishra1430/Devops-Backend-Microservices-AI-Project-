@@ -24,20 +24,9 @@ jobs:
         env:
           GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }}
 
-  Building-Code-Artifacts:
-    runs-on: ubuntu-latest
-    needs: Code-Lint-And-Review
-    steps:
-      - name: Code Checkout
-        uses: actions/checkout@v4
-      - name: Building Artifacts
-        working-directory: "./auth-service"
-        run: |
-          pip install -r requirements.txt
-
   Image-Build-And-Scan-And-Register:
     runs-on: ubuntu-latest
-    needs: [Code-Lint-And-Review,Building-Code-Artifacts]
+    needs: Code-Lint-And-Review
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
@@ -70,7 +59,7 @@ jobs:
   
   Helm:
     runs-on: ubuntu-latest
-    needs: [Code-Lint-And-Review,Building-Code-Artifacts,Image-Build-And-Scan-And-Register]
+    needs: [Code-Lint-And-Review,Image-Build-And-Scan-And-Register]
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
