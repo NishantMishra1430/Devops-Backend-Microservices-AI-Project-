@@ -78,8 +78,8 @@ jobs:
           token: ${{ secrets.GAT }}
       - name: Service Image Updating
         run: |
-          yq -i ".image.repository = '${{ secrets.DOCKER_USERNAME }}/quant-auth-service'" helm/charts/auth-service/values.yaml
-          yq -i ".image.tag = '${{github.sha}}'" helm/charts/auth-service/values.yaml
+          yq -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/quant-auth-service"' helm/charts/auth-service/values.yaml
+          yq -i '.image.tag = "${{github.sha}}"' helm/charts/auth-service/values.yaml
           cat helm/charts/auth-service/values.yaml
       - name: Commit and Push To Trigger ArgoCD
         run: |
