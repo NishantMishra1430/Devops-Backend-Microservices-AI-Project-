@@ -33,7 +33,7 @@ jobs:
       - name: Building Artifacts
         working-directory: "./auth-service"
         run: |
-          pip install -ry requirements.txt
+          pip install -r requirements.txt
 
   Image-Build-And-Scan-And-Register:
     runs-on: ubuntu-latest
