@@ -4,4 +4,3 @@ This is a Backend microservices AI powered Quant Algorithmic trading application
 
 
 
-
