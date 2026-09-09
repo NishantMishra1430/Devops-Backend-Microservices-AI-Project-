@@ -10,7 +10,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "70da9da0f3231db40c2b4da9a3b5fd726d74a4f7"
+  tag: "164e3c89c2f25477737bba01c176b277798164d1"
 env:
   database_url:
     valueFrom:
