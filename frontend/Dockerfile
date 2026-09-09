@@ -1,7 +1,7 @@
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app 
 COPY package*.json ./
-RUN npm install 
+RUN npm install  
 COPY . . 
 ENV VITE_WS_URL=/ws/
 ENV VITE_API_BASE_URL=""
