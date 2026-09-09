@@ -8,6 +8,7 @@ on:
 
     paths:
       - "auth-service/**"
+      - "helm/charts/auth-service/**"
       - ".github/workflows/auth-ci.yml"
 
 

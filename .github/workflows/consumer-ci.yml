@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "consumer/**"
+      - "helm/charts/consumer/**"
       - ".github/workflows/consumer-ci.yml"
 
 jobs:
@@ -41,7 +42,7 @@ jobs:
           context: "./consumer"
           load: true
           tags: quant-consumer:${{github.sha}}
-          dockerfile: Dockerfile
+          file: Dockerfile
       - name: Trivy Scan 
         uses: aquasecurity/trivy-action@master
         with:
