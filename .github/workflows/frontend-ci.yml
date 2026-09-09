@@ -1,0 +1,78 @@
+name: Frontend CI pipeline
+on:
+  push:
+    branches:
+        - test 
+        - main
+    paths:
+        - "frontend/**"
+        - ".github/workflows/frontend-ci.yml"
+jobs:
+  Code-Review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Credentials HardCoding Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }}
+
+  Image-Build-Scan-Push-To-Registry:
+    runs-on: ubuntu-latest
+    needs: Code-Review
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Image Build
+        uses: docker/build-push-action@v5
+        with:
+          context: "./frontend"
+          load: True
+          tags: quant-frontend-service:${{github.sha}}
+      - name: Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'quant-frontend-service:${{github.sha}}'
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL"
+      - name: Push To DockerHub
+        run: |
+          docker tag quant-frontend-service:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-frontend-service:${{github.sha}}
+
+          docker push ${{ secrets.DOCKER_USERNAME }}/quant-frontend-service:${{github.sha}}
+          
+  Helm:
+    runs-on: ubuntu-latest
+    needs: [Code-Review,Image-Build-Scan-Push-To-Registry]
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GAT }}
+
+      - name: Update Helm Values
+        run: |
+
+          yq -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/quant-frontend-service"' helm/charts/frontend-service/values.yaml
+          yq -i '.image.tag = "${{github.sha}}"' helm/charts/frontend-service/values.yaml
+          cat helm/charts/frontend-service/values.yaml
+
+      - name: Commit and Push Changes to Trigger ArgoCD
+        run: |
+          git config user.name "${{ secrets.GUN }}"
+          git config user.email "${{ secrets.GMAIL }}"
+          git add helm/charts/frontend-service/values.yaml
+          git commit -m "chore(gitops): update frontend-service image to ${{github.sha}}"
+          git push -u origin ${{ github.ref_name }}
