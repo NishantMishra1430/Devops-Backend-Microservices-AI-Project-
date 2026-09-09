@@ -8,6 +8,9 @@ on:
         - "frontend/**"
         - "helm/charts/frontend-service/**"
         - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches:
+      - main
 jobs:
   Code-Review:
     runs-on: ubuntu-latest

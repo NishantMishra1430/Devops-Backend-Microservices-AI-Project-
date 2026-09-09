@@ -9,6 +9,9 @@ on:
       - "consumer/**"
       - "helm/charts/consumer/**"
       - ".github/workflows/consumer-ci.yml"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   Code-Lint-And-Review:

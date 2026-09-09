@@ -9,6 +9,9 @@ on:
       - "notification-service/**"
       - "helm/charts/notification-service/**"
       - ".github/workflows/notification-ci.yml"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   Code-Review:

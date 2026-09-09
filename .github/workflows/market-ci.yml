@@ -9,6 +9,9 @@ on:
       - "market-data-service/**"
       - "helm/charts/market-data-service/**"
       - ".github/workflows/market-ci.yml"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   Code-Review:

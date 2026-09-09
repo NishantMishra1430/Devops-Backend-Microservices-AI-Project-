@@ -9,7 +9,9 @@ on:
       - "consumer/**"
       - "helm/charts/execution-engine/**"
       - ".github/workflows/execution-engine-ci.yml"
-
+  pull_request:
+    branches:
+      - main
 jobs:
   Code-Lint-And-Review:
     runs-on: ubuntu-latest

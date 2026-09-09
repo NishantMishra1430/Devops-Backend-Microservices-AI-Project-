@@ -9,6 +9,9 @@ on:
       - "api-gateway/**"
       - "helm/charts/api-gateway/**"
       - ".github/workflows/api-gateway-ci.yml"
+  pull_request:
+    branches:
+      - main
 
 
 jobs:

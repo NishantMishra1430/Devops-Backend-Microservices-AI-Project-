@@ -9,6 +9,10 @@ on:
       - "producer/**"
       - "helm/charts/producer/**"
       - ".github/workflows/producer-ci.yml"
+  pull_request:
+    branches:
+      - main
+
 
 jobs:
   Code-Review:

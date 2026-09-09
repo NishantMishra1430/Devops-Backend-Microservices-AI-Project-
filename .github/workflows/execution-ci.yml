@@ -9,6 +9,9 @@ on:
       - "execution-service/**"
       - "helm/charts/execution-service/**"
       - ".github/workflows/execution-ci.yml"
+  pull_request:
+    branches:
+      - main
 
 
 jobs:
