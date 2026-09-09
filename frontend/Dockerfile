@@ -1,8 +1,7 @@
 FROM node:24-alpine AS build
 WORKDIR /app 
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
-RUN npm install  
+RUN npm install --legacy-peer-deps
 COPY . . 
 ENV VITE_WS_URL=/ws/
 ENV VITE_API_BASE_URL=""
