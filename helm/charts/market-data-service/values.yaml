@@ -10,7 +10,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "086258db5e2d80a48d19232b1fc7019644b40404"
+  tag: "5a384d59a783928316215cb175e2c57ba1d98b6d"
 env:
   redis_url:
     valueFrom:
