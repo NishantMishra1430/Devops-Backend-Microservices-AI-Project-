@@ -1,0 +1,83 @@
+name: Quant AI Engine CI Pipeline 
+
+on:
+  push:
+    branches:
+      - test
+      - main
+    paths:
+      - "quant-ai-engine/**"
+      - "helm/charts/quant-ai-engine/**"
+      - ".github/workflows/quant-ai-engine-ci.yml"
+  pull_request:
+    branches:
+      - main 
+
+jobs:
+  Code-Lint-And-Review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Credentials leak Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }}
+        continue-on-error: false
+
+  Image-Build-And-Scan-And-Register:
+    runs-on: ubuntu-latest
+    needs: Code-Lint-And-Review
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+      - name: SetUp Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Image Build 
+        uses: docker/build-push-action@v5
+        with:
+          context: "./quant-ai-engine"
+          load: true
+          tags: quant-ai-engine:${{github.sha}}
+      - name: Trivy Scan 
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'quant-ai-engine:${{github.sha}}'
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL"
+      - name: Push Image To DockerHub
+        run: |
+          docker tag quant-ai-engine:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-ai-engine:${{github.sha}}
+          docker push ${{ secrets.DOCKER_USERNAME }}/quant-ai-engine:${{github.sha}}
+
+  
+  Helm:
+    runs-on: ubuntu-latest
+    needs: [Code-Lint-And-Review,Image-Build-And-Scan-And-Register]
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GAT }}
+      - name: Service Image Updating
+        run: |
+          yq -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/quant-ai-engine"' helm/charts/quant-ai-engine/values.yaml
+          yq -i '.image.tag = "${{github.sha}}"' helm/charts/quant-ai-engine/values.yaml
+          cat helm/charts/quant-ai-engine/values.yaml
+      - name: Commit and Push To Trigger ArgoCD
+        run: |
+          git config user.name "${{ secrets.GUN }}"
+          git config user.email "${{ secrets.GMAIL }}"
+          git add helm/charts/quant-ai-engine/values.yaml
+          git commit -m "chore(gitops): update quant-ai-engine image to ${{github.sha}} [skip ci]"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push -u origin ${{ github.ref_name }}

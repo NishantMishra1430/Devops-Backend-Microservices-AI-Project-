@@ -1,7 +1,53 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyd
+*.pkl
 
+# Ignore virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Ignore distribution/build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ignore test and coverage files
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temp files
+*.log
+*.tmp
+*.bak
+
+# Ignore environment/config files that shouldn't be in the image
 .env
-.env.example
-logs/
-.git
-*.md
-cache
+.env.*
+*.secret
+*.key
+
+# Ignore Git files
+.git/
+.gitignore
+.gitattributes
+
