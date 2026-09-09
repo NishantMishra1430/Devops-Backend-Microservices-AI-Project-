@@ -24,9 +24,8 @@ jobs:
       - name: Credentials leak Scan
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }}
+          GITHUB_TOKEN: ${{ secrets.GAT }}
         continue-on-error: false
-
   Image-Build-And-Scan-And-Register:
     runs-on: ubuntu-latest
     needs: Code-Lint-And-Review
@@ -61,6 +60,7 @@ jobs:
 
   
   Helm:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: [Code-Lint-And-Review,Image-Build-And-Scan-And-Register]
     steps:
@@ -78,6 +78,6 @@ jobs:
           git config user.name "${{ secrets.GUN }}"
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/quant-ai-engine/values.yaml
-          git commit -m "chore(gitops): update quant-ai-engine image to ${{github.sha}} [skip ci]"
+          git commit -m "chore(gitops): update quant-ai-engine image to ${{github.sha}}"
           git pull --rebase origin ${{ github.ref_name }}
           git push -u origin ${{ github.ref_name }}

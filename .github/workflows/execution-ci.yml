@@ -25,8 +25,7 @@ jobs:
       - name: Credentials HardCoding Scan
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }}
-        continue-on-error: false
+          GITHUB_TOKEN: ${{ secrets.GAT }}
 
 
   Image-Build-Scan-Push-To-Registry:
@@ -62,6 +61,7 @@ jobs:
 
           docker push ${{ secrets.DOCKER_USERNAME }}/quant-execution-service:${{github.sha}}
   Helm:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: [Code-Review,Image-Build-Scan-Push-To-Registry]
     steps:
@@ -82,6 +82,6 @@ jobs:
           git config user.name "${{ secrets.GUN }}"
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/execution-service/values.yaml
-          git commit -m "chore(gitops): update execution-service image to ${{github.sha}} [skip ci]"
+          git commit -m "chore(gitops): update execution-service image to ${{github.sha}}"
           git pull --rebase origin ${{ github.ref_name }}
           git push -u origin ${{ github.ref_name }}
