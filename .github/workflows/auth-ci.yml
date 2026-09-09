@@ -24,9 +24,8 @@ jobs:
         with:
           fetch-depth: 0
       - name: Credentials leak Scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_ACCESS_TOKEN: ${{ secrets.GAT }}
+        run: |
+          docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" --verbose --redact
 
   Image-Build-And-Scan-And-Register:
     runs-on: ubuntu-latest
