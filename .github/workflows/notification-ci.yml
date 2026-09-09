@@ -77,4 +77,5 @@ jobs:
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/notification-service/values.yaml
           git commit -m "chore(gitops): update notification-service image to ${{github.sha}}"
+          git pull --rebase origin ${{ github.ref_name }}
           git push -u origin ${{ github.ref_name }}
