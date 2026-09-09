@@ -42,7 +42,7 @@ jobs:
           context: "./consumer"
           load: true
           tags: quant-execution-engine:${{github.sha}}
-          file: "./consumer/ex.en.Dockerfile"
+          file: "ex.en.Dockerfile"
       - name: Trivy Scan 
         uses: aquasecurity/trivy-action@master
         with:
