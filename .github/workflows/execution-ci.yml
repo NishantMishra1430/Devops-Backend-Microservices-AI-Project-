@@ -79,4 +79,5 @@ jobs:
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/execution-service/values.yaml
           git commit -m "chore(gitops): update execution-service image to ${{github.sha}}"
+          git pull --rebase origin ${{ github.ref_name }}
           git push -u origin ${{ github.ref_name }}

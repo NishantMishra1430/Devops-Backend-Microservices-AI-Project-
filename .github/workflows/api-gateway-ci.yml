@@ -75,4 +75,5 @@ jobs:
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/api-gateway/values.yaml
           git commit -m "chore(gitops): update api-gateway image to ${{github.sha}}"
+          git pull --rebase origin ${{ github.ref_name }}
           git push -u origin ${{ github.ref_name }}
