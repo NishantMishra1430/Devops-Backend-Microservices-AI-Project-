@@ -10,7 +10,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "e726a39ab1dba3034f0056ba0edf4f8d044833c9"
+  tag: "5c23ea4fbe677e06d09c06cc3658912b7f7ce0f9"
 env:
   rabbitmq:
     valueFrom:
