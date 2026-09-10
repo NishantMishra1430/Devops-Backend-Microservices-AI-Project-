@@ -12,7 +12,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: [Notification Service CI Pipeline]
+    types:
+      - completed
 
+concurrency:
+  group: ci-pipeline
+  cancel-in-progress: false
 
 jobs:
   Code-Review:

@@ -11,6 +11,15 @@ on:
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: [Execution Engine CI Pipeline]
+    types:
+      - completed
+
+concurrency:
+  group: ci-pipeline
+  cancel-in-progress: false
+
 jobs:
   Code-Review:
     runs-on: ubuntu-latest

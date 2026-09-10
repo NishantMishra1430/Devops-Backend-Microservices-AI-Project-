@@ -1,4 +1,4 @@
-name: Execution Engine Pipeline
+name: Execution Engine CI Pipeline
 
 on:
   push:
@@ -12,6 +12,15 @@ on:
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: [Execution Service CI Pipeline]
+    types:
+      - completed
+
+concurrency:
+  group: ci-pipeline
+  cancel-in-progress: false
+
 jobs:
   Code-Lint-And-Review:
     runs-on: ubuntu-latest

@@ -1,4 +1,4 @@
-name: Consumer Service Pipeline
+name: Consumer Service CI Pipeline
 
 on:
   push:
@@ -12,6 +12,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: [Auth Service CI Pipeline]
+    types:
+      - completed
+
+concurrency:
+  group: ci-pipeline
+  cancel-in-progress: false
 
 jobs:
   Code-Lint-And-Review:

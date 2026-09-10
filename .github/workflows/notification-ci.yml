@@ -12,6 +12,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: [Market Service CI Pipeline]
+    types:
+      - completed
+
+concurrency:
+  group: ci-pipeline
+  cancel-in-progress: false
 
 jobs:
   Code-Review:

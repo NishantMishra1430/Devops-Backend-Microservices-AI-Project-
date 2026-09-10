@@ -12,7 +12,11 @@ on:
   pull_request:
     branches:
       - main
+  
 
+concurrency:
+  group: ci-pipeline
+  cancel-in-progress: false
 
 jobs:
   Code-Lint-And-Review:
