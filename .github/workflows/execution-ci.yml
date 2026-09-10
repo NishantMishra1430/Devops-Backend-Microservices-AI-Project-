@@ -61,7 +61,7 @@ jobs:
 
           docker push ${{ secrets.DOCKER_USERNAME }}/quant-execution-service:${{github.sha}}
   Helm:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: [Code-Review,Image-Build-Scan-Push-To-Registry]
     steps:
