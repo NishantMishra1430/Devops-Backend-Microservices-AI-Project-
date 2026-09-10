@@ -63,9 +63,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: [Code-Lint-And-Review,Image-Build-And-Scan-And-Register]
-    concurrency:
-      group: CI-push-queue  
-      cancel-in-progress: false
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
