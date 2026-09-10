@@ -10,7 +10,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "5c23ea4fbe677e06d09c06cc3658912b7f7ce0f9"
+  tag: "9037c5279998719fadaa8f92158582abc4f341b7"
 env:
   vite_app: development
   vite_ws:
