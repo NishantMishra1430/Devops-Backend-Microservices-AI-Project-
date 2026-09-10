@@ -61,7 +61,10 @@ jobs:
   Helm:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: Image-Build-And-Scan-And-Register
+    needs: [Image-Build-And-Scan-And-Register,Code-Lint-And-Review]
+    concurrency:
+      group: CI-push-queue  
+      cancel-in-progress: false
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
