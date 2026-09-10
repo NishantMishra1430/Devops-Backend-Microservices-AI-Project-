@@ -12,14 +12,7 @@ on:
   pull_request:
     branches:
       - main
-  workflow_run:
-    workflows: [Consumer Service CI Pipeline]
-    types:
-      - completed
 
-concurrency:
-  group: ci-pipeline
-  cancel-in-progress: false
 
 jobs:
   Code-Review:
@@ -67,29 +60,3 @@ jobs:
           docker tag quant-execution-service:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-execution-service:${{github.sha}}
 
           docker push ${{ secrets.DOCKER_USERNAME }}/quant-execution-service:${{github.sha}}
-  Helm:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    needs: [Code-Review,Image-Build-Scan-Push-To-Registry]
-
-    steps:
-      - name: Code Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GAT }}
-
-      - name: Update Helm Values
-        run: |
-
-          yq -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/quant-execution-service"' helm/charts/execution-service/values.yaml
-          yq -i '.image.tag = "${{github.sha}}"' helm/charts/execution-service/values.yaml
-          cat helm/charts/execution-service/values.yaml
-
-      - name: Commit and Push Changes to Trigger ArgoCD
-        run: |
-          git config user.name "${{ secrets.GUN }}"
-          git config user.email "${{ secrets.GMAIL }}"
-          git add helm/charts/execution-service/values.yaml
-          git commit -m "chore(gitops): update execution-service image to ${{github.sha}} [skip ci]"
-          git pull --rebase origin ${{ github.ref_name }}
-          git push -u origin ${{ github.ref_name }}
