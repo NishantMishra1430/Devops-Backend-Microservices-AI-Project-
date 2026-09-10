@@ -7,7 +7,7 @@ on:
       - test
     paths:
       - "producer/**"
-      - "helm/charts/producer/**"
+      # - "helm/charts/producer/**"
       - ".github/workflows/producer-ci.yml"
   pull_request:
     branches:

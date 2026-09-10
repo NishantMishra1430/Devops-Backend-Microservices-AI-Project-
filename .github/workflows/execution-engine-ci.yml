@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - "consumer/**"
-      - "helm/charts/execution-engine/**"
+      # - "helm/charts/execution-engine/**"
       - ".github/workflows/execution-engine-ci.yml"
   pull_request:
     branches:

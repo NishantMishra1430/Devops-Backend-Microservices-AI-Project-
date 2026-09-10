@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - "consumer/**"
-      - "helm/charts/consumer/**"
+      # - "helm/charts/consumer/**"
       - ".github/workflows/consumer-ci.yml"
   pull_request:
     branches:

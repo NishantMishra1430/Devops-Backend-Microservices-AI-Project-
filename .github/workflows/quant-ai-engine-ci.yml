@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - "quant-ai-engine/**"
-      - "helm/charts/quant-ai-engine/**"
+      # - "helm/charts/quant-ai-engine/**"
       - ".github/workflows/quant-ai-engine-ci.yml"
   pull_request:
     branches:
