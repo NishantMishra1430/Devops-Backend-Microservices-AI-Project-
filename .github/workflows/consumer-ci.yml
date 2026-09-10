@@ -78,7 +78,7 @@ jobs:
           git config user.name "${{ secrets.GUN }}"
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/consumer/values.yaml
-          git commit -m "chore(gitops): update consumer-service image to ${{github.sha}}"
+          git commit -m "chore(gitops): update consumer-service image to ${{github.sha}} [skip ci]"
           git pull origin ${{ github.ref_name }} --rebase
           git push -u origin ${{ github.ref_name }}
 

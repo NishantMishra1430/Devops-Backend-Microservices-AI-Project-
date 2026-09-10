@@ -77,7 +77,7 @@ jobs:
           git config user.name "${{ secrets.GUN }}"
           git config user.email "${{ secrets.GMAIL }}"
           git add helm/charts/execution-engine/values.yaml
-          git commit -m "chore(gitops): update quant-execution-engine-service image to ${{github.sha}}"
+          git commit -m "chore(gitops): update quant-execution-engine-service image to ${{github.sha}} [skip ci]"
           git pull --rebase origin ${{ github.ref_name }}
           git push -u origin ${{ github.ref_name }}
 
