@@ -6,7 +6,6 @@ on:
         - main
     paths:
         - "frontend/**"
-        # - "helm/charts/frontend-service/**"
         - ".github/workflows/frontend-ci.yml"
   pull_request:
     branches:
