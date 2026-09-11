@@ -1,4 +1,4 @@
-name: Consumer Service Pipeline
+name: Consumer Service CI Pipeline
 
 on:
   push:
@@ -7,11 +7,12 @@ on:
       - main
     paths:
       - "consumer/**"
-      - "helm/charts/consumer/**"
+      # - "helm/charts/consumer/**"
       - ".github/workflows/consumer-ci.yml"
   pull_request:
     branches:
       - main
+
 
 jobs:
   Code-Lint-And-Review:
@@ -58,28 +59,4 @@ jobs:
         run: |
           docker tag quant-consumer:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-consumer:${{github.sha}}
           docker push ${{ secrets.DOCKER_USERNAME }}/quant-consumer:${{github.sha}} 
-
-  Helm:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    needs: [Code-Lint-And-Review,Image-Build-And-Scan-And-Register]
-    steps:
-      - name: Code Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GAT }}
-      - name: Service Image Updating
-        run: |
-          yq -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/quant-consumer"' helm/charts/consumer/values.yaml
-          yq -i '.image.tag = "${{github.sha}}"' helm/charts/consumer/values.yaml
-          cat helm/charts/consumer/values.yaml
-      - name: Commit and Push To Trigger ArgoCD
-        run: |
-          git config user.name "${{ secrets.GUN }}"
-          git config user.email "${{ secrets.GMAIL }}"
-          git add helm/charts/consumer/values.yaml
-          git commit -m "chore(gitops): update consumer-service image to ${{github.sha}} [skip ci]"
-          git pull origin ${{ github.ref_name }} --rebase
-          git push -u origin ${{ github.ref_name }}
-
 
