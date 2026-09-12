@@ -94,12 +94,12 @@ jobs:
       - name: Verify Helm Values Change
         run: |
           echo "Updated frontend image tag:"
-          grep -A3 "^image:" helm/charts/frontend/values.yaml
+          grep -A3 "^image:" helm/charts/frontend-service/values.yaml
 
       - name: Configure Git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "${{secrets.GUN}}"
+          git config user.email "${{secrets.GMAIL}}"
 
       - name: Commit Helm Values
         run: |
