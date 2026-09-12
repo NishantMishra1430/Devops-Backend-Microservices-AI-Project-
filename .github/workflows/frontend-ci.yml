@@ -89,7 +89,7 @@ jobs:
 
       - name: Update Frontend Image Tag
         run: |
-          yq -i image.tag="${{ github.sha }}" helm/charts/frontend-service/values.yaml
+          'yq -i image.tag="${{ github.sha }}" helm/charts/frontend-service/values.yaml'
 
       - name: Verify Helm Values Change
         run: |
