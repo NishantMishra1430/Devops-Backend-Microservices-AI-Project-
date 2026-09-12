@@ -12,6 +12,9 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
 
 jobs:
   Code-Review:

@@ -7,45 +7,56 @@ on:
       - test
     paths:
       - "market-data-service/**"
-      # - "helm/charts/market-data-service/**"
       - ".github/workflows/market-ci.yml"
+
   pull_request:
     branches:
       - main
+    paths:
+      - "market-data-service/**"
+      - ".github/workflows/market-ci.yml"
 
 
 jobs:
   Code-Review:
     runs-on: ubuntu-latest
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Credentials HardCoding Scan
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GAT }}
 
+
   Image-Build-Scan-Push-To-Registry:
     runs-on: ubuntu-latest
     needs: Code-Review
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
+
       - name: Docker login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Image Build
         uses: docker/build-push-action@v5
         with:
           context: "./market-data-service"
           load: True
           tags: quant-market-data-service:${{github.sha}}
+
       - name: Trivy Vulnerability Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -54,9 +65,56 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: "CRITICAL"
+
       - name: Push To DockerHub
         run: |
           docker tag quant-market-data-service:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-market-data-service:${{github.sha}}
 
           docker push ${{ secrets.DOCKER_USERNAME }}/quant-market-data-service:${{github.sha}}
-          
+
+
+  Helm-GitOps-Update:
+    runs-on: ubuntu-latest
+    needs: Image-Build-Scan-Push-To-Registry
+
+    concurrency:
+      group: gitops-update
+      cancel-in-progress: false
+
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GAT }}
+          fetch-depth: 0
+
+      - name: Update Market Data Service Image Tag
+        run: |
+          yq -i '.image.tag = "${{ github.sha }}"' helm/charts/market-data-service/values.yaml
+
+      - name: Verify Helm Values Change
+        run: |
+          echo "Updated Market Data Service image tag:"
+          grep -A3 "^image:" helm/charts/market-data-service/values.yaml
+
+      - name: Configure Git
+        run: |
+          git config user.name "${{secrets.GUN}}"
+          git config user.email "${{secrets.GMAIL}}"
+
+      - name: Commit Helm Values
+        run: |
+          git add helm/charts/market-data-service/values.yaml
+
+          git diff --cached --quiet && \
+            echo "No changes to commit." && \
+            exit 0
+
+          git commit \
+            -m "chore(market-data-service): update image to ${{ github.sha }}"
+
+      - name: Push GitOps Change
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
