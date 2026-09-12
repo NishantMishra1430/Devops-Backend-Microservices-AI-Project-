@@ -114,6 +114,7 @@ jobs:
 
           git commit \
             -m "chore(execution-engine): update image to ${{ github.sha }}"
+          git pull --rebase origin ${{github.ref_name}}
 
       - name: Push GitOps Change
         run: |
