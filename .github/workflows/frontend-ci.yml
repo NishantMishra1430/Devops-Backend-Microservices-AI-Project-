@@ -1,12 +1,14 @@
 name: Frontend CI pipeline
+
 on:
   push:
     branches:
-        - test 
-        - main
+      - test
+      - main
     paths:
-        - "frontend/**"
-        - ".github/workflows/frontend-ci.yml"
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
   pull_request:
     branches:
       - main
@@ -14,11 +16,13 @@ on:
 jobs:
   Code-Review:
     runs-on: ubuntu-latest
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Credentials HardCoding Scan
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -27,33 +31,87 @@ jobs:
   Image-Build-Scan-Push-To-Registry:
     runs-on: ubuntu-latest
     needs: Code-Review
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
-      - name: Docker login
+
+      - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Image Build
         uses: docker/build-push-action@v5
         with:
           context: "./frontend"
-          load: True
-          tags: quant-frontend-service:${{github.sha}}
+          load: true
+          tags: quant-frontend-service:${{ github.sha }}
+
       - name: Trivy Vulnerability Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'quant-frontend-service:${{github.sha}}'
+          image-ref: "quant-frontend-service:${{ github.sha }}"
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
           severity: "CRITICAL"
+
       - name: Push To DockerHub
         run: |
-          docker tag quant-frontend-service:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-frontend-service:${{github.sha}}
+          docker tag \
+            quant-frontend-service:${{ github.sha }} \
+            ${{ secrets.DOCKER_USERNAME }}/quant-frontend-service:${{ github.sha }}
 
-          docker push ${{ secrets.DOCKER_USERNAME }}/quant-frontend-service:${{github.sha}}
-          
+          docker push \
+            ${{ secrets.DOCKER_USERNAME }}/quant-frontend-service:${{ github.sha }}
+
+  Helm-GitOps-Update:
+    runs-on: ubuntu-latest
+    needs: Image-Build-Scan-Push-To-Registry
+
+    concurrency:
+      group: gitops-update
+      cancel-in-progress: false
+
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GAT }}
+          fetch-depth: 0
+
+      - name: Update Frontend Image Tag
+        run: |
+          yq -i image.tag="${{ github.sha }}" helm/charts/frontend-service/values.yaml
+
+      - name: Verify Helm Values Change
+        run: |
+          echo "Updated frontend image tag:"
+          grep -A3 "^image:" helm/charts/frontend/values.yaml
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit Helm Values
+        run: |
+          git add helm/charts/frontend-service/values.yaml
+
+          git diff --cached --quiet && \
+            echo "No changes to commit." && \
+            exit 0
+
+          git commit \
+            -m "chore(frontend): update image to ${{ github.sha }}"
+
+      - name: Push GitOps Change
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
