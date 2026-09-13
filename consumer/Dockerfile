@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN useradd -m quantuser
 WORKDIR /app
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --only-upgrade perl-base && \
     rm -rf /var/lib/apt/lists/*
 COPY --chown=quantuser:quantuser requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
