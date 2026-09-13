@@ -69,7 +69,6 @@ jobs:
         run: |
           docker tag quant-ai-engine:${{github.sha}} ${{ secrets.DOCKER_USERNAME }}/quant-ai-engine:${{github.sha}}
           docker push ${{ secrets.DOCKER_USERNAME }}/quant-ai-engine:${{github.sha}}
-
   Helm-GitOps-Update:
     runs-on: ubuntu-latest
     needs: Image-Build-And-Scan-And-Register

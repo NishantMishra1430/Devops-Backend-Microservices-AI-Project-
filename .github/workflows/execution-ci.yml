@@ -104,7 +104,6 @@ jobs:
         run: |
           git config user.name "${{secrets.GUN}}"
           git config user.email "${{secrets.GMAIL}}"
-
       - name: Commit Helm Values
         run: |
           git add helm/charts/execution-service/values.yaml

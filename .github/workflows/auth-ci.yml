@@ -80,7 +80,6 @@ jobs:
       queue: max
 
     if: github.event_name == 'push'
-
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4

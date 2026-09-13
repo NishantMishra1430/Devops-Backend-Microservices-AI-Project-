@@ -81,7 +81,6 @@ jobs:
       group: gitops-update
       cancel-in-progress: false
       queue: max
-
     if: github.event_name == 'push'
 
     steps:
