@@ -81,28 +81,36 @@ jobs:
 
     if: github.event_name == 'push'
     steps:
-      - name: Code Checkout
+      - name: Checkout Config Repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GAT }}
+          repository: NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-
+          token: ${{ secrets.CONFIG_REPO_PAT }}
+          path: config-repo
           fetch-depth: 0
 
       - name: Update Auth Service Image Tag
         run: |
+          cd config-repo
           yq -i '.image.tag = "${{ github.sha }}"' helm/charts/auth-service/values.yaml
 
       - name: Verify Helm Values Change
         run: |
+          cd config-repo
           echo "Updated Auth Service image tag:"
           grep -A3 "^image:" helm/charts/auth-service/values.yaml
 
-      - name: Configure Git
+      - name: Configure Git and Pull Latest State
         run: |
+          cd config-repo
           git config user.name "${{secrets.GUN}}"
           git config user.email "${{secrets.GMAIL}}"
+          # Pulls from the config repo's main branch to prevent lock errors
+          git pull --rebase origin main
 
-      - name: Commit Helm Values
+      - name: Commit and Push Helm Values
         run: |
+          cd config-repo
           git add helm/charts/auth-service/values.yaml
 
           git diff --cached --quiet && \
@@ -110,9 +118,7 @@ jobs:
             exit 0
 
           git commit \
-            -m "chore(auth-service): update image to ${{ github.sha }}"
-          git pull --rebase origin ${{github.ref_name}}
-
-      - name: Push GitOps Change
-        run: |
-          git push origin HEAD:${{ github.ref_name }}
+            -m "chore(auth-service): update image to ${{ github.sha }} [skip ci]"
+          
+          # Pushes directly to the external config repository
+          git push origin main
