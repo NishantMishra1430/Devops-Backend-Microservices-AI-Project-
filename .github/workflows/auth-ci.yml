@@ -105,8 +105,7 @@ jobs:
           cd config-repo
           git config user.name "${{secrets.GUN}}"
           git config user.email "${{secrets.GMAIL}}"
-          # Pulls from the config repo's main branch to prevent lock errors
-          git pull --rebase origin main
+          
 
       - name: Commit and Push Helm Values
         run: |
@@ -120,5 +119,9 @@ jobs:
           git commit \
             -m "chore(auth-service): update image to ${{ github.sha }} [skip ci]"
           
+          # Pulls from the config repo's main branch to prevent lock errors
+          git pull --rebase origin main
+
           # Pushes directly to the external config repository
           git push origin main
+          
