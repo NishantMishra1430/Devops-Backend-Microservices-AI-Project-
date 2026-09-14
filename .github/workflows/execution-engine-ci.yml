@@ -96,13 +96,13 @@ jobs:
       - name: Update Execution Engine Image Tag
         run: |
           cd config-repo
-          yq -i '.image.tag = "${{ github.sha }}"' helm/charts/execution-engine/values.yaml
+          yq -i '.image.tag = "${{ github.sha }}"' charts/execution-engine/values.yaml
 
       - name: Verify Helm Values Change
         run: |
           cd config-repo
           echo "Updated Execution Engine image tag:"
-          grep -A3 "^image:" helm/charts/execution-engine/values.yaml
+          grep -A3 "^image:" charts/execution-engine/values.yaml
 
       - name: Configure Git and Pull Latest State
         run: |
@@ -115,7 +115,7 @@ jobs:
       - name: Commit and Push Helm Values
         run: |
           cd config-repo
-          git add helm/charts/execution-engine/values.yaml
+          git add charts/execution-engine/values.yaml
 
           git diff --cached --quiet && \
             echo "No changes to commit." && \

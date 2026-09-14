@@ -95,13 +95,13 @@ jobs:
       - name: Update Producer Image Tag
         run: |
           cd config-repo
-          yq -i '.image.tag = "${{ github.sha }}"' helm/charts/producer/values.yaml
+          yq -i '.image.tag = "${{ github.sha }}"' charts/producer/values.yaml
 
       - name: Verify Helm Values Change
         run: |
           cd config-repo
           echo "Updated Producer image tag:"
-          grep -A3 "^image:" helm/charts/producer/values.yaml
+          grep -A3 "^image:" charts/producer/values.yaml
 
       - name: Configure Git and Pull Latest State
         run: |
@@ -114,7 +114,7 @@ jobs:
       - name: Commit and Push Helm Values
         run: |
           cd config-repo
-          git add helm/charts/producer/values.yaml
+          git add charts/producer/values.yaml
 
           git diff --cached --quiet && \
             echo "No changes to commit." && \

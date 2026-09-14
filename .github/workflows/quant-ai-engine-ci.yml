@@ -92,13 +92,13 @@ jobs:
       - name: Update Quant AI Engine Image Tag
         run: |
           cd config-repo
-          yq -i '.image.tag = "${{ github.sha }}"' helm/charts/quant-ai-engine/values.yaml
+          yq -i '.image.tag = "${{ github.sha }}"' charts/quant-ai-engine/values.yaml
 
       - name: Verify Helm Values Change
         run: |
           cd config-repo
           echo "Updated Quant AI Engine image tag:"
-          grep -A3 "^image:" helm/charts/quant-ai-engine/values.yaml
+          grep -A3 "^image:" charts/quant-ai-engine/values.yaml
 
       - name: Configure Git and Pull Latest State
         run: |
@@ -111,7 +111,7 @@ jobs:
       - name: Commit and Push Helm Values
         run: |
           cd config-repo
-          git add helm/charts/quant-ai-engine/values.yaml
+          git add charts/quant-ai-engine/values.yaml
 
           git diff --cached --quiet && \
             echo "No changes to commit." && \
