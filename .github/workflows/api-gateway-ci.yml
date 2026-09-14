@@ -102,8 +102,7 @@ jobs:
           cd config-repo
           git config user.name "${{secrets.GUN}}"
           git config user.email "${{secrets.GMAIL}}"
-          # Ensures the absolute latest state is pulled before committing, preventing lock errors
-          git pull --rebase origin main
+          
 
       - name: Commit and Push Helm Values
         run: |
@@ -116,6 +115,9 @@ jobs:
 
           git commit \
             -m "chore(api-gateway): update image to ${{ github.sha }} [skip ci]"
+
+          # Pulls from the config repo's main branch to prevent lock errors
+          git pull --rebase origin main
           
           # Pushes directly to the external config repository's main branch
           git push origin main
