@@ -81,7 +81,6 @@ jobs:
       queue: max
 
     if: github.event_name == 'push'
-
     steps:
       - name: Checkout Config Repository
         uses: actions/checkout@v4
@@ -94,13 +93,13 @@ jobs:
       - name: Update Consumer Image Tag
         run: |
           cd config-repo
-          yq -i '.image.tag = "${{ github.sha }}"' helm/charts/consumer/values.yaml
+          yq -i '.image.tag = "${{ github.sha }}"' charts/consumer/values.yaml
 
       - name: Verify Helm Values Change
         run: |
           cd config-repo
           echo "Updated Consumer image tag:"
-          grep -A3 "^image:" helm/charts/consumer/values.yaml
+          grep -A3 "^image:" charts/consumer/values.yaml
 
       - name: Configure Git and Pull Latest State
         run: |
@@ -113,7 +112,7 @@ jobs:
       - name: Commit and Push Helm Values
         run: |
           cd config-repo
-          git add helm/charts/consumer/values.yaml
+          git add charts/consumer/values.yaml
 
           git diff --cached --quiet && \
             echo "No changes to commit." && \

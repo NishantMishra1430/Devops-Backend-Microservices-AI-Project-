@@ -80,7 +80,6 @@ jobs:
       queue: max
 
     if: github.event_name == 'push'
-
     steps:
       - name: Checkout Config Repository
         uses: actions/checkout@v4
@@ -93,13 +92,13 @@ jobs:
       - name: Update Auth Service Image Tag
         run: |
           cd config-repo
-          yq -i '.image.tag = "${{ github.sha }}"' helm/charts/auth-service/values.yaml
+          yq -i '.image.tag = "${{ github.sha }}"' charts/auth-service/values.yaml
 
       - name: Verify Helm Values Change
         run: |
           cd config-repo
           echo "Updated Auth Service image tag:"
-          grep -A3 "^image:" helm/charts/auth-service/values.yaml
+          grep -A3 "^image:" charts/auth-service/values.yaml
 
       - name: Configure Git and Pull Latest State
         run: |
@@ -112,7 +111,7 @@ jobs:
       - name: Commit and Push Helm Values
         run: |
           cd config-repo
-          git add helm/charts/auth-service/values.yaml
+          git add charts/auth-service/values.yaml
 
           git diff --cached --quiet && \
             echo "No changes to commit." && \
