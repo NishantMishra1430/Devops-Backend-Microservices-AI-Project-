@@ -7,8 +7,8 @@ spec:
   project: default
   source:
     chart: loki-stack
-    repoURL: https://grafana.github.io/helm-charts
-    targetRevision: 2.10.2
+    repoURL: https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git
+    targetRevision: main 
     helm:
       values: |
         grafana:

@@ -7,8 +7,8 @@ spec:
   project: default
   source:
     chart: kube-prometheus-stack
-    repoURL: https://prometheus-community.github.io/helm-charts
-    targetRevision: 62.3.1
+    repoURL: https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git
+    targetRevision: main 
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
