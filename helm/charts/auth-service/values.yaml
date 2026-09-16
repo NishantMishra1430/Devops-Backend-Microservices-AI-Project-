@@ -104,6 +104,32 @@ httpRoute:
   - chart-example.local
   # List of rules and filters applied.
   rules:
+<<<<<<< HEAD
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /headers
+            #   filters:
+            #   - type: RequestHeaderModifier
+            #     requestHeaderModifier:
+            #       set:
+            #       - name: My-Overwrite-Header
+            #         value: this-is-the-only-value
+            #       remove:
+            #       - User-Agent
+            # - matches:
+            #   - path:
+            #       type: PathPrefix
+            #       value: /echo
+            #     headers:
+            #     - name: version
+            #       value: v2
+resources: 
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+=======
   - matches:
     - path:
         type: PathPrefix
@@ -129,6 +155,7 @@ resources:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+>>>>>>> main
   limits:
     cpu: 250m
     memory: 256Mi
