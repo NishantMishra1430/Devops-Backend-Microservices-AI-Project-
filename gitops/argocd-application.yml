@@ -1,0 +1,238 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: api-gateway
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/api-gateway
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/auth-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: consumer
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/consumer
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: execution-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/execution-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: execution-engine
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/execution-engine
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/frontend-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: market-data-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/market-data-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: notification-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/notification-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: producer
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/producer
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quant-ai-engine
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git'
+    targetRevision: main
+    path: charts/quant-ai-engine
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: quant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: kube-prometheus-stack
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: 62.3.1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+--- 
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: loki-stack
+    repoURL: https://grafana.github.io/helm-charts
+    targetRevision: 2.10.2
+    helm:
+      values: |
+        grafana:
+          enabled: false # We use the Grafana from prometheus-stack
+        promtail:
+          enabled: true
+# ... (rest of the destination and syncPolicy remains identical to the Prometheus app)
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: monitoring
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
