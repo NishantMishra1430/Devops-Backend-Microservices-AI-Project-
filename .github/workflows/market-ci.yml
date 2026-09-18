@@ -32,10 +32,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GAT }}
 
+  Code-Build:
+    runs-on: ubuntu-latest
+    needs: Code-Review
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      
+      - name: NodeJS Setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: "24"
+
+      - name: Install Dependencies
+        working-directory: market-data-service/
+        run: |
+          npm install
+          npm run build --if-present
+
 
   Image-Build-Scan-Push-To-Registry:
     runs-on: ubuntu-latest
-    needs: Code-Review
+    needs: [Code-Review, Code-Build]
 
     steps:
       - name: Code Checkout
@@ -75,7 +93,7 @@ jobs:
 
   Helm-GitOps-Update:
     runs-on: ubuntu-latest
-    needs: Image-Build-Scan-Push-To-Registry
+    needs: [Code-Review, Code-Build, Image-Build-Scan-Push-To-Registry]
 
     concurrency:
       group: gitops-update

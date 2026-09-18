@@ -16,10 +16,10 @@ spec:
         promtail:
           enabled: true
 # ... (rest of the destination and syncPolicy remains identical to the Prometheus app)
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: monitoring
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

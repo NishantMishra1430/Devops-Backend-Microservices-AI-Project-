@@ -1,0 +1,81 @@
+# ==========================================
+# 1. Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.*
+*.pem
+*.key
+*.cert
+credentials.json
+secrets.yaml
+
+# ==========================================
+# 2. Python (Quant AI, Execution Engine, Consumer)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+pip-log.txt
+poetry.lock  # Optional: ignore if strictly using requirements.txt
+
+# ==========================================
+# 3. Quant & Data Science Specifics
+# ==========================================
+.ipynb_checkpoints/
+*.csv
+*.tsv
+*.dat
+*.parquet
+*.h5
+*.hdf5
+*.feather
+*.pkl       # Pickled models/data
+*.pt        # PyTorch models
+*.pth       # PyTorch models
+*.onnx      # Exported ML models
+
+# ==========================================
+# 4. Node.js (API Gateway, Frontend)
+# ==========================================
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+.next/
+out/
+coverage/
+
+# ==========================================
+# 5. Databases & Local Logs
+# ==========================================
+*.log
+logs/
+*.sqlite3
+*.db
+redis-data/
+postgres-data/
+
+# ==========================================
+# 6. IDEs, Editors & OS Files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# 7. Infrastructure & DevOps (Local testing)
+# ==========================================
+.terraform/
+*.tfstate
+*.tfstate.backup
+.minikube/
+.kube/config
