@@ -342,6 +342,31 @@ Every individual microservice follows a strict DevSecOps lifecycle before its im
   <img src="./diagram/Screenshot 2026-09-19 144428.png" alt="Single Service DevSecOps Pipeline" width="850">
 </p>
 
+## 📊 Accessing the Grafana Observability Dashboard
+
+The platform utilizes the `kube-prometheus-stack` for centralized telemetry and monitoring. Because the cluster is deployed on a remote server (VPS/Cloud Instance), you must bind the port-forwarding command to all network interfaces to access the dashboard from your local machine.
+
+### Step 1: Establish a Port-Forward Connection
+Run the following command on your remote server terminal. The `--address 0.0.0.0` flag ensures the port is exposed externally, rather than just on the server's local loopback.
+
+```bash
+kubectl port-forward --address 0.0.0.0 svc/kube-prometheus-stack-grafana 8080:80 -n monitoring
+```
+**Note: Leave this terminal session running. If you close the terminal, the connection will drop.**
+
+### Step 2: Access the Dashboard via Browser
+Open a web browser on your personal computer and navigate to your server's public IP address on port 8080:
+```bash
+http://<YOUR_SERVER_PUBLIC_IP>:8080
+```
+### Step 3: Login Credentials
+Log in using the default credentials provisioned by the Prometheus Operator stack:
+
+Username: admin
+
+Password: prom-operator
+
+
 ## 👨‍💻 Author
 **Nishant Mishra**  
 *Computer Science and Engineering*
