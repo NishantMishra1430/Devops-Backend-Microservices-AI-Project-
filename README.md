@@ -322,6 +322,26 @@ To view the Kubernetes manifests, Helm charts, Observability stack (Prometheus/L
 
 👉 **[View the GitOps Configuration Repository Here](https://github.com/NishantMishra1430/Config-Repo-of-DevOps-Backend-Microservices-Application-.git)**
 
+## ⚙️ Continuous Integration (CI) & Pipeline Architecture
+
+To bridge the gap between our source code and the GitOps CD pipeline, we utilize GitHub Actions. The CI architecture is designed to handle multiple microservices building simultaneously while enforcing strict security scans and preventing Git push race conditions.
+
+### 🔄 High-Level CI/CD & Concurrency Orchestration
+
+When a developer pushes code, multiple microservice pipelines may trigger in parallel. To prevent race conditions when multiple jobs attempt to update the shared `values.yaml` in the Config-Repo simultaneously, the final update step is routed through a serialized concurrency queue.
+
+<p align="center">
+  <img src="./diagram/Screenshot 2026-09-19 144221.png" alt="Multi-Service Concurrency Architecture" width="850">
+</p>
+
+### 🛡️ DevSecOps Pipeline Deep Dive (Single Service Lifecycle)
+
+Every individual microservice follows a strict DevSecOps lifecycle before its image is cleared for deployment. This includes credential scanning, dependency building, and container vulnerability assessments.
+
+<p align="center">
+  <img src="./diagram/Screenshot 2026-09-19 144428.png" alt="Single Service DevSecOps Pipeline" width="850">
+</p>
+
 ## 👨‍💻 Author
 **Nishant Mishra**  
 *Computer Science and Engineering*
