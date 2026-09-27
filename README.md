@@ -3,7 +3,7 @@
 ## 📌 Overview
 This repository contains the source code for a high-performance, event-driven quantitative trading platform. The system is designed to ingest real-time market data, evaluate complex algorithmic and machine-learning models, and execute trades with minimal latency. 
 
-Built on a highly decoupled  microservices architecture, the platform separates concerns across data ingestion, strategy evaluation, risk management, and order execution, ensuring high availability and scalability for intensive computational workloads.
+Built on a highly decoupled microservices architecture, the platform separates concerns across data ingestion, strategy evaluation, risk management, and order execution, ensuring high availability and scalability for intensive computational workloads.
 
 ---
 
