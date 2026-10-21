@@ -1,4 +1,5 @@
 # Algorithmic Quantitative Trading Platform
+
 ## 📌 Overview
 This repository contains the source code for a high-performance, event-driven quantitative trading platform. The system is designed to ingest real-time market data, evaluate complex algorithmic and machine-learning models, and execute trades with minimal latency. 
 
