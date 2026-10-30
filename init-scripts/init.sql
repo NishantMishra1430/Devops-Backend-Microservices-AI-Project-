@@ -1,6 +1,6 @@
 -- init.sql
 -- Description: Idempotent initialization script for the Quant Trading System
- 
+  
 -- 1. Create auxiliary databases if they don't exist (Note: PostgreSQL doesn't support IF NOT EXISTS for databases directly in plain SQL, so we handle it gracefully or use compose)
 -- Alternatively, ensure your connection string matches the POSTGRES_DB env variable in docker-compose.yml.
 
