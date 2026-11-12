@@ -1,5 +1,5 @@
 FROM node:24-alpine 
-ENV NODE_ENV=production
+ENV NODE_ENV=production 
 RUN mkdir -p /app &&\
 chown -R node:node /app
 WORKDIR /app
